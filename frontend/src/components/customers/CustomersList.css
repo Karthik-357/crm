@@ -1,0 +1,358 @@
+/* CustomersList.css */
+.customers-header-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.customers-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #1a202c;
+}
+.add-customer-btn {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.add-customer-btn:hover {
+  background: #1d4ed8;
+}
+.plus-icon {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+.customers-table-wrapper {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  overflow-x: auto; /* Enable horizontal scrolling */
+  width: 100%;
+  /* Optional: always show scrollbar on Windows */
+  scrollbar-color: #a3a3a3 #f3f4f6;
+  scrollbar-width: thin;
+}
+.customers-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+.customers-table th, .customers-table td {
+  padding: 1.25rem 1.5rem;
+  text-align: left;
+}
+.customers-table th {
+  background: #f9fafb;
+  color: #6b7280;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-bottom: 1px solid #e5e7eb;
+}
+.customers-table tbody tr {
+  border-bottom: 1px solid #f1f1f1;
+  transition: background 0.2s;
+}
+.customers-table tbody tr:hover {
+  background: #f9fafb;
+}
+.customer-info-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.customer-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.customer-avatar-placeholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #e0e7ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2563eb;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+.customer-info-text {
+  display: flex;
+  flex-direction: column;
+}
+.customer-name {
+  font-weight: 600;
+  color: #1a202c;
+  font-size: 1.05rem;
+}
+.customer-email {
+  color: #6b7280;
+  font-size: 0.97rem;
+}
+.customer-industry {
+  color: #1a202c;
+  font-size: 1rem;
+}
+.customer-status-badge {
+  display: inline-block;
+  padding: 0.3em 1.1em;
+  border-radius: 1em;
+  font-size: 0.98rem;
+  font-weight: 500;
+  background: #f3f4f6;
+  color: #6b7280;
+}
+.customer-status-badge.status-active {
+  background: #d1fae5;
+  color: #059669;
+}
+.customer-status-badge.status-inactive {
+  background: #fef3c7;
+  color: #b45309;
+}
+.customer-status-badge.status-lead {
+  background: #e0e7ff;
+  color: #2563eb;
+}
+.customer-status-badge.status-default {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+.customer-value {
+  color: #374151;
+  font-size: 1rem;
+  font-weight: 500;
+}
+.customer-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+.edit-btn, .delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.2rem;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+.edit-btn {
+  color: #2563eb;
+}
+.edit-btn:hover {
+  color: #1d4ed8;
+}
+.delete-btn {
+  color: #ef4444;
+}
+.delete-btn:hover {
+  color: #b91c1c;
+}
+.icon {
+  display: block;
+}
+
+.customer-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.customer-modal-container {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+  max-width: 420px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 0;
+}
+.customer-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid #f1f1f1;
+}
+.customer-modal-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1a202c;
+}
+.customer-modal-close {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 0.2rem;
+  transition: color 0.2s;
+}
+.customer-modal-close:hover {
+  color: #1a202c;
+}
+.customer-modal-form {
+  padding: 1.5rem;
+}
+.customer-modal-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+.customer-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.customer-modal-field label {
+  font-size: 0.98rem;
+  font-weight: 500;
+  color: #374151;
+}
+.customer-modal-field input,
+.customer-modal-field select {
+  padding: 0.6rem 0.9rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 1rem;
+  color: #1a202c;
+  background: #f9fafb;
+  outline: none;
+  transition: border 0.2s;
+}
+.customer-modal-field input:focus,
+.customer-modal-field select:focus {
+  border: 1.5px solid #2563eb;
+  background: #fff;
+}
+.customer-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  margin-top: 1.5rem;
+}
+.customer-modal-btn-primary {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.6rem 1.3rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.customer-modal-btn-primary:hover {
+  background: #1d4ed8;
+}
+.customer-modal-btn-outline {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 0.6rem 1.3rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.customer-modal-btn-outline:hover {
+  background: #e5e7eb;
+  color: #1a202c;
+}
+
+.customer-row.compact {
+  height: 48px !important;
+}
+.customer-avatar.compact {
+  width: 28px !important;
+  height: 28px !important;
+}
+.customer-status-badge.compact {
+  font-size: 0.88rem !important;
+  padding: 0.12em 0.7em !important;
+  border-radius: 1em !important;
+}
+.customer-value.compact {
+  font-size: 0.88rem !important;
+  font-weight: 400 !important;
+}
+.action-icon-btn {
+  background: none;
+  border: none;
+  padding: 0.18rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 0.18s;
+  vertical-align: middle;
+  color: #8a8a8a;
+}
+.action-icon-btn .icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.4;
+}
+.edit-btn {
+  color: #2563eb;
+}
+.edit-btn:hover {
+  color: #1d4ed8;
+}
+.delete-btn {
+  color: #ef4444;
+}
+.delete-btn:hover {
+  color: #b91c1c;
+} 
+.customer-row.compact td {
+  padding: 0.5rem 0.7rem !important;
+}
+.customer-avatar.compact, .customer-avatar-placeholder.compact {
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 0.95rem !important;
+}
+.customer-info-row {
+  gap: 0.5rem !important;
+}
+.customer-name {
+  font-size: 0.98rem !important;
+}
+.customer-email {
+  font-size: 0.85rem !important;
+}
+.customer-status-badge.compact {
+  font-size: 0.85rem !important;
+  padding: 0.18em 0.7em !important;
+}
+.customer-value.compact {
+  font-size: 0.95rem !important;
+}
+.customers-table th, .customers-table td {
+  line-height: 1.2;
+}
+.customers-table th {
+  font-size: 0.85rem !important;
+  padding: 0.5rem 0.7rem !important;
+} 
