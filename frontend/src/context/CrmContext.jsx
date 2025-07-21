@@ -1,10 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
-import { io } from 'socket.io-client';
 import { AuthContext } from './AuthContext';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://crm-swart-kappa.vercel.app/api';
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'https://crm-swart-kappa.vercel.app';
 
 const CrmContext = createContext();
 
@@ -63,14 +61,6 @@ export function CrmProvider({ children }) {
 
   useEffect(() => {
     fetchAll();
-    // Real-time activities with socket.io
-    const socket = io(SOCKET_URL);
-    socket.on('new-activity', (activity) => {
-      setActivities(prev => [activity, ...prev]);
-    });
-    return () => {
-      socket.disconnect();
-    };
   }, []);
 
   const fetchAll = async () => {
