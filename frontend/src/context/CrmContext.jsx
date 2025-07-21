@@ -3,8 +3,8 @@ import axios from 'axios';
 import { io } from 'socket.io-client';
 import { AuthContext } from './AuthContext';
 
-const API_BASE = 'https://crm-swart-kappa.vercel.app/api';
-const SOCKET_URL = 'https://crm-swart-kappa.vercel.app';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://crm-swart-kappa.vercel.app/api';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'https://crm-swart-kappa.vercel.app';
 
 const CrmContext = createContext();
 
