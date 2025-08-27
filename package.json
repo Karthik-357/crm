@@ -3,6 +3,6 @@
   "dependencies": {
     "chartjs": "^0.3.24",
     "html2canvas": "^1.4.1",
-    "jspdf": "^3.0.1"
+    "jspdf": "^3.0.2"
   }
 }

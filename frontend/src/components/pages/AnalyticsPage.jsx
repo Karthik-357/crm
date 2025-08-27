@@ -1,6 +1,6 @@
 
 import React, { useMemo, useState } from 'react';
-import jsPDF from 'jspdf';
+import { jsPDF } from "jspdf";
 import html2canvas from 'html2canvas';
 import './AnalyticsPage.css';
 import { Chart, ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend, PointElement, LineElement, Title } from 'chart.js';
