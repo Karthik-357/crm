@@ -15,7 +15,14 @@ const CustomersList = ({ limit }: CustomersListProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentCustomer, setCurrentCustomer] = useState<any>(null);
 
-  const sortedCustomers = [...customers].sort((a, b) => b.value - a.value);
+  // Helper to sum project values for a customer
+  const getCustomerValue = (customerId: string) => {
+    return projects
+      .filter((project: any) => project.customerId === customerId)
+      .reduce((sum: number, project: any) => sum + (project.value || 0), 0);
+  };
+
+  const sortedCustomers = [...customers].sort((a, b) => getCustomerValue(b.id) - getCustomerValue(a.id));
   const displayCustomers = limit ? sortedCustomers.slice(0, limit) : sortedCustomers;
 
   const getStatusVariant = (status: string) => {
@@ -39,13 +46,6 @@ const CustomersList = ({ limit }: CustomersListProps) => {
   const handleAdd = () => {
     setCurrentCustomer(null);
     setIsModalOpen(true);
-  };
-
-  // Helper to sum project values for a customer
-  const getCustomerValue = (customerId: string) => {
-    return projects
-      .filter((project: any) => project.customerId === customerId)
-      .reduce((sum: number, project: any) => sum + (project.value || 0), 0);
   };
 
   const getCustomerProjectsCount = (customerId: string) => projects.filter((project: any) => String(project.customerId) === String(customerId)).length;
@@ -102,7 +102,7 @@ const CustomersList = ({ limit }: CustomersListProps) => {
                   <span className="customer-projects-count">{getCustomerProjectsCount(customer.id)}</span>
                 </td>
                 <td>
-                  <span className="customer-value compact">${getCustomerValue(customer.id).toLocaleString()}</span>
+                  <span className="customer-value compact">₹{getCustomerValue(customer.id).toLocaleString('en-IN')}</span>
                 </td>
                 {!limit && (
                   <td className="customer-actions">

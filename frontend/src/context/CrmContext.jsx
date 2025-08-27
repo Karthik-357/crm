@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
-import { AuthContext } from './AuthContext';
+import { useAuth } from './AuthContext';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://crm-swart-kappa.vercel.app/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 const CrmContext = createContext();
 
@@ -14,7 +14,7 @@ function mapId(obj) {
 }
 
 export function CrmProvider({ children }) {
-  const { user: currentUser } = useContext(AuthContext) || {};
+  const { user: currentUser, isAuthenticated } = useAuth();
   const [customers, setCustomers] = useState([]);
   const [projects, setProjects] = useState([]);
   const [tasks, setTasks] = useState([]);
@@ -60,30 +60,48 @@ export function CrmProvider({ children }) {
   }, [currentUser && currentUser.id]);
 
   useEffect(() => {
-    fetchAll();
-  }, []);
+    if (isAuthenticated && currentUser && currentUser.id) {
+      fetchAll();
+    }
+  }, [isAuthenticated, currentUser]);
 
   const fetchAll = async () => {
     try {
-      const [custRes, projRes, taskRes, actRes, eventRes] = await Promise.all([
+      const [custRes, projRes, actRes, eventRes] = await Promise.all([
         axios.get(`${API_BASE}/customers`),
         axios.get(`${API_BASE}/projects`),
-        axios.get(`${API_BASE}/tasks`),
         axios.get(`${API_BASE}/activities`),
         axios.get(`${API_BASE}/events`),
       ]);
       setCustomers(custRes.data.map(mapId));
       setProjects(projRes.data.map(mapId));
-      setTasks(taskRes.data.map(mapId));
       setActivities(actRes.data.map(mapId));
       setEvents(eventRes.data.map(mapId));
+      
+      // Fetch tasks only if user is authenticated
+      if (currentUser && currentUser.id && isAuthenticated) {
+        try {
+          const taskRes = await axios.get(`${API_BASE}/tasks`, withAuth());
+          setTasks(taskRes.data.map(mapId));
+        } catch (err) {
+          console.error('Error fetching tasks:', err);
+          setTasks([]);
+        }
+      } else {
+        setTasks([]);
+      }
     } catch (err) {
       // Optionally handle error
+      console.error('Error fetching data:', err);
     }
   };
 
   // CUSTOMER CRUD
   const addCustomer = async (customer) => {
+    if (!currentUser || !currentUser.id) {
+      throw new Error('User not authenticated');
+    }
+    
     const res = await axios.post(`${API_BASE}/customers`, customer, withAuth());
     setCustomers(prev => [...prev, mapId(res.data)]);
     await addActivity({
@@ -94,10 +112,18 @@ export function CrmProvider({ children }) {
     });
   };
   const updateCustomer = async (customer) => {
+    if (!currentUser || !currentUser.id) {
+      throw new Error('User not authenticated');
+    }
+    
     const res = await axios.put(`${API_BASE}/customers/${customer.id}`, customer, withAuth());
     setCustomers(prev => prev.map(c => (c.id === res.data._id ? mapId(res.data) : c)));
   };
   const deleteCustomer = async (id) => {
+    if (!currentUser || !currentUser.id) {
+      throw new Error('User not authenticated');
+    }
+    
     await axios.delete(`${API_BASE}/customers/${id}`, withAuth());
     setCustomers(prev => prev.filter(c => c.id !== id));
     setProjects(prev => prev.filter(p => p.customerId !== id));
@@ -113,9 +139,13 @@ export function CrmProvider({ children }) {
 
   // PROJECT CRUD
   const addProject = async (project) => {
+    if (!currentUser || !currentUser.id) {
+      throw new Error('User not authenticated');
+    }
+    
     const res = await axios.post(`${API_BASE}/projects`, project, withAuth());
     setProjects(prev => [...prev, mapId(res.data)]);
-    const actor = currentUser?.name || currentUser?.email || 'A user';
+    const actor = currentUser.name || currentUser.email || 'A user';
     await addActivity({
       customerId: project.customerId,
       type: 'note',
@@ -124,39 +154,74 @@ export function CrmProvider({ children }) {
     });
   };
   const updateProject = async (project) => {
+    if (!currentUser || !currentUser.id) {
+      throw new Error('User not authenticated');
+    }
+    
     const res = await axios.put(`${API_BASE}/projects/${project.id}`, project, withAuth());
     setProjects(prev => prev.map(p => (String(p.id) === String(res.data._id) ? mapId(res.data) : p)));
     await fetchAll(); // Force refresh after update
   };
   const deleteProject = async (id) => {
+    if (!currentUser || !currentUser.id) {
+      throw new Error('User not authenticated');
+    }
+    
+    // Find project to capture its customerId for activity
+    const projectToDelete = projects.find(p => p.id === id);
     await axios.delete(`${API_BASE}/projects/${id}`, withAuth());
     setProjects(prev => prev.filter(p => p.id !== id));
     setTasks(prev => prev.filter(t => t.projectId !== id));
-    const actor = currentUser?.name || currentUser?.email || 'A user';
-    await addActivity({
-      customerId: null,
-      type: 'note',
-      description: `${actor} deleted a project`,
-      date: new Date().toISOString(),
-    });
+    const actor = currentUser.name || currentUser.email || 'A user';
+    if (projectToDelete && projectToDelete.customerId) {
+      await addActivity({
+        customerId: projectToDelete.customerId,
+        type: 'note',
+        description: `${actor} deleted a project`,
+        date: new Date().toISOString(),
+      });
+    }
   };
 
   // TASK CRUD
   const addTask = async (task) => {
-    const res = await axios.post(`${API_BASE}/tasks`, task, withAuth());
-    setTasks(prev => [...prev, mapId(res.data)]);
-    const actor = currentUser?.name || currentUser?.email || 'A user';
-    await addActivity({
-      customerId: task.customerId,
-      type: 'note',
-      description: `${actor} added a new task: ${task.title}`,
-      date: new Date().toISOString(),
-    });
+    console.log('addTask called with:', task);
+    console.log('currentUser:', currentUser);
+    console.log('isAuthenticated:', isAuthenticated);
+    
+    if (!currentUser || !currentUser.id) {
+      console.error('User not authenticated, currentUser:', currentUser);
+      throw new Error('User not authenticated');
+    }
+    
+    try {
+      const authHeaders = withAuth();
+      console.log('Auth headers:', authHeaders);
+      
+      const res = await axios.post(`${API_BASE}/tasks`, task, authHeaders);
+      console.log('Task created successfully:', res.data);
+      
+      setTasks(prev => [...prev, mapId(res.data)]);
+      const actor = currentUser.name || currentUser.email || 'A user';
+      await addActivity({
+        customerId: task.customerId,
+        type: 'note',
+        description: `${actor} added a new task: ${task.title}`,
+        date: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error in addTask:', error);
+      throw error;
+    }
   };
   const updateTask = async (task) => {
+    if (!currentUser || !currentUser.id) {
+      throw new Error('User not authenticated');
+    }
+    
     const res = await axios.put(`${API_BASE}/tasks/${task.id}`, task, withAuth());
     setTasks(prev => prev.map(t => (t.id === res.data._id ? mapId(res.data) : t)));
-    const actor = currentUser?.name || currentUser?.email || 'A user';
+    const actor = currentUser.name || currentUser.email || 'A user';
     await addActivity({
       customerId: task.customerId,
       type: 'note',
@@ -165,15 +230,23 @@ export function CrmProvider({ children }) {
     });
   };
   const deleteTask = async (id) => {
+    if (!currentUser || !currentUser.id) {
+      throw new Error('User not authenticated');
+    }
+    
+    // Find task to capture its customerId for activity
+    const taskToDelete = tasks.find(t => t.id === id);
     await axios.delete(`${API_BASE}/tasks/${id}`, withAuth());
     setTasks(prev => prev.filter(t => t.id !== id));
-    const actor = currentUser?.name || currentUser?.email || 'A user';
-    await addActivity({
-      customerId: null,
-      type: 'note',
-      description: `${actor} deleted a task`,
-      date: new Date().toISOString(),
-    });
+    const actor = currentUser.name || currentUser.email || 'A user';
+    if (taskToDelete && taskToDelete.customerId) {
+      await addActivity({
+        customerId: taskToDelete.customerId,
+        type: 'note',
+        description: `${actor} deleted a task`,
+        date: new Date().toISOString(),
+      });
+    }
   };
 
   // ACTIVITY CRUD
@@ -198,9 +271,21 @@ export function CrmProvider({ children }) {
   const getTasksByCustomerId = (customerId) => tasks.filter(t => t.customerId === customerId);
   const getActivitiesByCustomerId = (customerId) => activities.filter(a => a.customerId === customerId);
 
+  // Admin function to get tasks for a specific user
+  const getTasksByUserId = async (userId) => {
+    try {
+      const res = await axios.get(`${API_BASE}/tasks/user/${userId}`, withAuth());
+      return res.data.map(mapId);
+    } catch (err) {
+      console.error('Error fetching tasks for user:', err);
+      return [];
+    }
+  };
+
   // Helper for auth header
   function withAuth() {
     const token = localStorage.getItem('token');
+    console.log('withAuth called, token:', token ? 'exists' : 'missing');
     return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
   }
 
@@ -254,6 +339,7 @@ export function CrmProvider({ children }) {
     getProjectsByCustomerId,
     getTasksByCustomerId,
     getActivitiesByCustomerId,
+    getTasksByUserId, // Add the new function to the context value
   };
 
   return (

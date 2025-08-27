@@ -1,13 +1,35 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useCrm } from '../../context/CrmContext';
 import CustomersList from '../customers/CustomersList.tsx';
 import TasksList from '../tasks/TasksList.tsx';
 import ProjectsOverview from '../projects/ProjectsOverview';
-import RecentActivities from '../activities/RecentActivities';
 import Badge from '../ui/Badge';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Tooltip,
+  Legend,
+  Filler,
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Tooltip,
+  Legend,
+  Filler,
+);
 
 const DashboardPage = () => {
   const { customers, projects, tasks } = useCrm();
+
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://crm-swart-kappa.vercel.app/api';
 
   // State for real customer stats
   const [projectStats, setProjectStats] = useState({
@@ -16,14 +38,14 @@ const DashboardPage = () => {
   });
 
   useEffect(() => {
-    fetch('/api/projects/stats')
+    fetch(`${API_BASE}/projects/stats`)
       .then(res => res.json())
       .then(data => setProjectStats(data))
       .catch(() => setProjectStats({
         activeProjects: { thisMonth: 0, lastMonth: 0 },
         revenue: { thisMonth: 0, lastMonth: 0 }
       }));
-  }, []);
+  }, [API_BASE]);
 
   // Calculate metrics
   const now = new Date();
@@ -145,6 +167,45 @@ const DashboardPage = () => {
     month: 'long',
     day: 'numeric',
   });
+
+  // Performance Trends data (last 6 months)
+  const { trendLabels, customerTrendData } = useMemo(() => {
+    const monthKey = (d) => `${d.getFullYear()}-${d.getMonth()}`;
+    const end = new Date();
+    const months = [];
+    for (let i = 5; i >= 0; i--) {
+      const dt = new Date(end.getFullYear(), end.getMonth() - i, 1);
+      months.push(new Date(dt.getFullYear(), dt.getMonth(), 1));
+    }
+    const labels = months.map(m => m.toLocaleString('en-US', { month: 'short' }));
+
+    const customerMap = new Map(months.map(m => [monthKey(m), 0]));
+    customers.forEach(c => {
+      if (!c.createdAt) return;
+      const d = new Date(c.createdAt);
+      const k = monthKey(new Date(d.getFullYear(), d.getMonth(), 1));
+      if (customerMap.has(k)) customerMap.set(k, (customerMap.get(k) || 0) + 1);
+    });
+    const customerData = months.map(m => customerMap.get(monthKey(m)) || 0);
+
+    return { trendLabels: labels, customerTrendData: customerData };
+  }, [customers, projects]);
+
+  const customerTrendChart = {
+    labels: trendLabels,
+    datasets: [
+      {
+        label: 'New Customers',
+        data: customerTrendData,
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.15)',
+        fill: true,
+        tension: 0.35,
+        pointRadius: 3,
+      },
+    ],
+  };
+
 
   return (
     <div className="dashboard-page">
@@ -315,7 +376,7 @@ const DashboardPage = () => {
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                           <div style={{ fontWeight: 600, fontSize: 16, color: '#b91c1c', minWidth: 90, textAlign: 'right' }}>
-                            {project.value ? project.value.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }) : '-'}
+                            {project.value ? project.value.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }) : '-'}
                           </div>
                           <Badge variant={getStatusVariant(project.status)}>
                             {project.status.charAt(0).toUpperCase() + project.status.slice(1).replace('-', ' ')}
@@ -330,15 +391,24 @@ const DashboardPage = () => {
           </div>
         </div>
         <div className="dashboard-card" style={{ height: '100%' }}>
-          <h3 className="dashboard-card-title">Recent Activities</h3>
-          <RecentActivities limit={5} />
+          <div style={{ padding: '24px 24px 0 24px' }}>
+            <h2 className="dashboard-card-title" style={{ fontSize: '1.3rem', marginBottom: 8 }}>Performance Trends</h2>
+          </div>
+          <div style={{ padding: '0 24px 24px 24px' }}>
+            <div style={{ fontWeight: 500, color: '#6b7280', marginBottom: 8 }}>Customer Growth (Last 6 Months)</div>
+            <Line data={customerTrendChart} options={{
+              responsive: true,
+              plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+              scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+            }} />
+          </div>
         </div>
         <div className="dashboard-card" style={{ height: '100%' }}>
           <h3 className="dashboard-card-title">Top Customers</h3>
           <CustomersList limit={5} />
         </div>
         <div className="dashboard-card" style={{ height: '100%' }}>
-          <h3 className="dashboard-card-title">Upcoming Tasks</h3>
+          <h3 className="dashboard-card-title">My Upcoming Tasks</h3>
           <TasksList limit={5} />
         </div>
       </div>

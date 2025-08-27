@@ -61,38 +61,20 @@ const RecentActivities = ({ limit, customerId }: RecentActivitiesProps) => {
   };
 
   return (
-    <div className="space-y-4">
-      {sortedActivities.length === 0 ? (
-        <div className="text-center py-6 text-gray-500">No recent activities</div>
-      ) : (
-        <div className="space-y-0">
-          {sortedActivities.map((activity) => (
-            <div key={activity.id} className="relative pl-6 pb-5 border-l border-gray-200 group">
-              <div className="absolute top-0 left-0 -translate-x-1/2 w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center z-10">
-                {getActivityIcon(activity.type)}
-              </div>
-              <div className="ml-2 -mt-0.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <span className="text-sm font-medium text-gray-900">
-                      {activity.type.charAt(0).toUpperCase() + activity.type.slice(1)}
-                    </span>
-                    {!customerId && (
-                      <span className="ml-1.5 text-xs text-gray-500">
-                        with {getCustomerName(activity.customerId)}
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {formatDate(activity.date)} at {formatTime(activity.date)}
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600 mt-1">{activity.description}</p>
-              </div>
+    <div className="bg-white shadow-md rounded-lg p-4" style={{ minHeight: '300px', fontFamily: 'Segoe UI, Arial, sans-serif' }}>
+  
+      <div>
+        {sortedActivities.map((activity, idx) => (
+          <React.Fragment key={activity.id || idx}>
+            <div style={{ fontFamily: 'Segoe UI, Arial, sans-serif', fontSize: '15px', color: '#222', fontWeight: 400, marginBottom: '8px' }}>
+              {activity.description}
             </div>
-          ))}
-        </div>
-      )}
+            {idx !== sortedActivities.length - 1 && (
+              <hr style={{ border: 'none', borderTop: '1px solid #e5e7eb', marginBottom: '8px', marginTop: '-2px', opacity: 0.6 }} />
+            )}
+          </React.Fragment>
+        ))}
+      </div>
     </div>
   );
 };

@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const API_BASE = import.meta.env.VITE_API_BASE_URL;
+    const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
     try {
       const response = await fetch(`${API_BASE}/login`, {
         method: 'POST',

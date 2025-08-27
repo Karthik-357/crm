@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useCrm } from '../../context/CrmContext';
+import { useAuth } from '../../context/AuthContext';
 import Badge from '../ui/Badge';
 import { CheckCircle2, Clock, AlertCircle, CheckCircle } from 'lucide-react';
 
@@ -9,7 +10,17 @@ interface TasksListProps {
 
 const TasksList = ({ limit }: TasksListProps) => {
   const { tasks, updateTask, users, customers } = useCrm();
+  const { isAuthenticated, user: currentUser } = useAuth();
   
+  // Don't render if not authenticated
+  if (!isAuthenticated || !currentUser) {
+    return (
+      <div className="tasks-dashboard-list">
+        <div className="text-center py-6 text-gray-500">Please log in to view tasks</div>
+      </div>
+    );
+  }
+
   // Sort tasks by due date (most recent first) and filter out completed if limit is provided
   const sortedTasks = [...tasks]
     .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
@@ -43,6 +54,10 @@ const TasksList = ({ limit }: TasksListProps) => {
   };
 
   const markAsCompleted = (task: any) => {
+    if (!isAuthenticated || !currentUser) {
+      return;
+    }
+    
     updateTask({
       ...task,
       status: 'completed'
@@ -68,7 +83,9 @@ const TasksList = ({ limit }: TasksListProps) => {
   return (
     <div className="tasks-dashboard-list">
       {sortedTasks.length === 0 ? (
-        <div className="text-center py-6 text-gray-500">No tasks available</div>
+        <div className="text-center py-6 text-gray-500">
+          {tasks.length === 0 ? 'No tasks created yet. Create your first task to get started!' : 'No tasks match the current filter.'}
+        </div>
       ) : (
         <>
           {sortedTasks.map((task) => {

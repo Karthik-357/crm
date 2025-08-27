@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-// import { ChevronDownIcon, ChevronUpIcon, QuestionMarkCircleIcon, EnvelopeIcon, PhoneIcon } from '@heroicons/react/24/outline'; // Removed icon import
+import React from 'react';
 
 const HelpPage = () => {
   const [openFaq, setOpenFaq] = useState(null);

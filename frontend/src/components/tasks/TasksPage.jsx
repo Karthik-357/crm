@@ -1,20 +1,31 @@
 import React, { useState } from 'react';
 import { useCrm } from '../../context/CrmContext';
+import { useAuth } from '../../context/AuthContext';
 
 const TasksPage = () => {
   const { tasks, addTask, updateTask, customers } = useCrm();
+  const { isAuthenticated, user: currentUser } = useAuth();
   const [showAddTask, setShowAddTask] = useState(false);
   const [newTask, setNewTask] = useState({ title: '', description: '', dueDate: '', assignedTo: '', status: 'todo', priority: 'medium', customerId: '' });
-  const [filter, setFilter] = useState('all'); // For filtering tabs
-  const [sortBy, setSortBy] = useState('dueDate'); // For sorting
-  const [showArchived, setShowArchived] = useState(false); // Show archived toggle
+    const [filter, setFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('dueDate');
+  const [showArchived, setShowArchived] = useState(false);
 
-  // Helper: is task overdue?
+  // Don't render if not authenticated
+  if (!isAuthenticated || !currentUser) {
+    return (
+      <div className="tasks-page">
+        <div className="text-center py-8">
+          <p className="text-gray-500">Please log in to view your tasks.</p>
+        </div>
+      </div>
+    );
+  }
+
   const isOverdue = (task) => {
     return task.status !== 'completed' && new Date(task.dueDate) < new Date(new Date().toDateString());
   };
 
-  // Filtering logic
   const filteredTasks = tasks.filter(task => {
     if (filter === 'all') return true;
     if (filter === 'pending') return task.status === 'todo' || task.status === 'in-progress';
@@ -23,7 +34,6 @@ const TasksPage = () => {
     return true;
   });
 
-  // Sorting logic
   const sortedTasks = [...filteredTasks].sort((a, b) => {
     if (sortBy === 'dueDate') return new Date(a.dueDate) - new Date(b.dueDate);
     if (sortBy === 'priority') {
@@ -33,7 +43,6 @@ const TasksPage = () => {
     return 0;
   });
 
-  // Auto-archive: hide completed tasks older than 7 days unless showArchived is true
   const now = new Date();
   const displayTasks = sortedTasks.filter(task => {
     if (showArchived) return true;
@@ -44,6 +53,12 @@ const TasksPage = () => {
 
   const handleAddTask = async (e) => {
     e.preventDefault();
+    
+    if (!isAuthenticated || !currentUser) {
+      alert('Please log in to add tasks.');
+      return;
+    }
+    
     if (newTask.title.trim() && newTask.dueDate) {
       try {
         await addTask({
@@ -57,7 +72,9 @@ const TasksPage = () => {
         setNewTask({ title: '', description: '', dueDate: '', assignedTo: '', status: 'todo', priority: 'medium', customerId: '' });
         setShowAddTask(false);
       } catch (err) {
-        alert('Failed to add task. ' + (err?.response?.data?.error || err.message));
+        console.error('Task creation error:', err);
+        const errorMessage = err?.response?.data?.error || err.message || 'Unknown error occurred';
+        alert(`Failed to add task: ${errorMessage}`);
       }
     } else {
       alert('Please fill in all required fields (title, due date).');
@@ -75,11 +92,19 @@ const TasksPage = () => {
   return (
     <div className="tasks-page">
       <div className="tasks-header-row">
-        <h1 className="tasks-title">Tasks</h1>
+        <h1 className="tasks-title">My Tasks</h1>
         <button className="button button-primary tasks-add-btn" onClick={() => setShowAddTask(true)}>
           Add Task
         </button>
       </div>
+      
+      {/* Info message about user-specific tasks */}
+      <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
+        <p className="text-blue-800 text-sm">
+          💡 You're viewing your personal tasks. Each user has their own separate task list.
+        </p>
+      </div>
+      
       {/* Filtering Tabs */}
       <div className="tasks-filter-tabs">
         {['all', 'pending', 'completed', 'overdue'].map(tab => (

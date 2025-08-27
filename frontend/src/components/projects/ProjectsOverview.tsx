@@ -1,15 +1,6 @@
 import React from 'react';
 import { useCrm } from '../../context/CrmContext';
 import Badge from '../ui/Badge';
-import { Doughnut } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  ArcElement,
-  Tooltip,
-  Legend
-} from 'chart.js';
-
-ChartJS.register(ArcElement, Tooltip, Legend);
 
 const ProjectsOverview = () => {
   const { projects, customers } = useCrm();
@@ -22,10 +13,10 @@ const ProjectsOverview = () => {
   };
 
   const statuses = [
-    { label: 'Proposal', value: projectStats.proposal, color: 'bg-blue-500' },
-    { label: 'In Progress', value: projectStats['in-progress'], color: 'bg-yellow-500' },
-    { label: 'Completed', value: projectStats.completed, color: 'bg-green-500' },
-    { label: 'On Hold', value: projectStats['on-hold'], color: 'bg-red-500' },
+    { label: 'Proposal', value: projectStats.proposal, color: '#3b82f6' },
+    { label: 'In Progress', value: projectStats['in-progress'], color: '#f59e42' },
+    { label: 'Completed', value: projectStats.completed, color: '#22c55e' },
+    { label: 'On Hold', value: projectStats['on-hold'], color: '#ef4444' },
   ];
 
   const topProjects = projects.slice(0, 3);
@@ -50,22 +41,6 @@ const ProjectsOverview = () => {
     }
   };
 
-  const doughnutData = {
-    labels: statuses.map(s => s.label),
-    datasets: [
-      {
-        data: statuses.map(s => s.value),
-        backgroundColor: [
-          '#3b82f6', // blue
-          '#f59e42', // yellow
-          '#22c55e', // green
-          '#ef4444', // red
-        ],
-        borderWidth: 1,
-      },
-    ],
-  };
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div>
@@ -74,22 +49,19 @@ const ProjectsOverview = () => {
           <div style={{ fontSize: '14px', fontWeight: 500, color: '#374151' }}>{projects.length} Total</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-          <div style={{ width: '160px', height: '160px' }}>
-            <Doughnut data={doughnutData} options={{ plugins: { legend: { position: 'bottom' } } }} />
-          </div>
           <div style={{ flex: 1 }}>
             <div style={{ background: '#e5e7eb', height: '16px', borderRadius: '8px', overflow: 'hidden', display: 'flex' }}>
               {statuses.map((status, index) => (
                 <div
                   key={index}
-                  style={{ background: doughnutData.datasets[0].backgroundColor[index], height: '100%', width: `${(status.value / projects.length) * 100}%` }}
+                  style={{ background: statuses[index].color, height: '100%', width: `${projects.length ? (status.value / projects.length) * 100 : 0}%` }}
                 ></div>
               ))}
             </div>
             <div style={{ marginTop: '8px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', fontSize: '14px' }}>
               {statuses.map((status, index) => (
                 <div key={index} style={{ display: 'flex', alignItems: 'center' }}>
-                  <div style={{ height: '12px', width: '12px', borderRadius: '50%', background: doughnutData.datasets[0].backgroundColor[index], marginRight: '8px' }}></div>
+                  <div style={{ height: '12px', width: '12px', borderRadius: '50%', background: statuses[index].color, marginRight: '8px' }}></div>
                   <div style={{ color: '#374151' }}>{status.label}: {status.value}</div>
                 </div>
               ))}

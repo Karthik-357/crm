@@ -19,6 +19,7 @@ const Sidebar = ({ isOpen, closeSidebar }: SidebarProps) => {
     { name: 'Projects', icon: Briefcase, id: 'projects' },
     { name: 'Tasks', icon: CheckSquare, id: 'tasks' },
     { name: 'Calendar', icon: Calendar, id: 'calendar' },
+    { name: 'Analytics', icon: BarChart3, id: 'analytics' },
     { name: 'Settings', icon: SettingsIcon, id: 'settings' },
   ];
 

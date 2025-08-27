@@ -31,6 +31,20 @@ const userSchema = new mongoose.Schema({
     default: 'user',
     required: true
   },
+  // Password reset fields
+  resetToken: {
+    type: String
+  },
+  resetTokenExpiry: {
+    type: Date
+  },
+  // OTP fields for forgot password
+  otp: {
+    type: String
+  },
+  otpExpiry: {
+    type: Date
+  },
   createdAt: {
     type: Date,
     default: Date.now

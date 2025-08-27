@@ -159,7 +159,7 @@ const ProjectsPage = () => {
                 </div>
                 <div className="custom-modal-divider" />
                 <div className="custom-modal-field">
-                  <label>Value ($)</label>
+                  <label>Value (₹)</label>
                   <input type="number" placeholder="Value" value={newProject.value} onChange={e => setNewProject({ ...newProject, value: e.target.value })} />
                 </div>
                 <div className="custom-modal-field">
@@ -196,7 +196,7 @@ const ProjectsPage = () => {
             <div className="project-card-details">
               <div className="project-detail-row"><span>Start Date:</span><span className="project-detail-value">{formatDate(project.startDate)}</span></div>
               <div className="project-detail-row"><span>End Date:</span><span className="project-detail-value">{project.endDate ? formatDate(project.endDate) : 'In Progress'}</span></div>
-              <div className="project-detail-row"><span>Value:</span><span className="project-detail-value">${Number(project.value || 0).toLocaleString()}</span></div>
+              <div className="project-detail-row"><span>Value:</span><span className="project-detail-value">₹{Number(project.value || 0).toLocaleString('en-IN')}</span></div>
               <div className="project-detail-row"><span>Progress:</span><span className="project-detail-value">{Math.max(0, Math.min(100, Number(project.progress || 0)))}%</span></div>
               <div className="project-progress-bar-bg">
                 <div className="project-progress-bar" style={{ width: `${Math.max(0, Math.min(100, Number(project.progress || 0)))}%` }}></div>
@@ -241,7 +241,7 @@ const ProjectsPage = () => {
                 </div>
                 <div className="custom-modal-divider" />
                 <div className="custom-modal-field">
-                  <label>Value ($)</label>
+                  <label>Value (₹)</label>
                   <input type="number" placeholder="Value" value={currentProject.value} onChange={e => setCurrentProject({ ...currentProject, value: e.target.value })} />
                 </div>
                 <div className="custom-modal-field">
