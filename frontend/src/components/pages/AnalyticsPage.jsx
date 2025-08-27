@@ -3,37 +3,9 @@ import React, { useMemo, useState } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import './AnalyticsPage.css';
-import { Chart, ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
+import '../../utils/chartConfig'; // Import chart configuration
 import { Pie, Bar } from 'react-chartjs-2';
-import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { useCrm } from '../../context/CrmContext';
-
-// Custom center text plugin for doughnut charts
-const CenterTextPlugin = {
-  id: 'centerText',
-  beforeDraw: (chart, args, opts) => {
-    const { ctx, chartArea, data } = chart;
-    if (!chartArea) return;
-    const dataset = data.datasets?.[0];
-    if (!dataset) return;
-    const total = (dataset.data || []).reduce((a, b) => a + (Number(b) || 0), 0);
-    const { left, right, top, bottom } = chartArea;
-    const x = (left + right) / 2;
-    const y = (top + bottom) / 2;
-    ctx.save();
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#111827';
-    ctx.font = '700 16px Inter, Arial, sans-serif';
-    ctx.fillText(String(total), x, y - 6);
-    ctx.fillStyle = '#6b7280';
-    ctx.font = '500 11px Inter, Arial, sans-serif';
-    ctx.fillText('Total', x, y + 12);
-    ctx.restore();
-  }
-};
-
-Chart.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend, PointElement, LineElement, Title, ChartDataLabels, CenterTextPlugin);
 
 const AnalyticsPage = () => {
   const { customers, projects, tasks, activities, events } = useCrm();

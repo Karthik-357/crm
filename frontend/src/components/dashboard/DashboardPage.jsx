@@ -4,27 +4,8 @@ import CustomersList from '../customers/CustomersList.tsx';
 import TasksList from '../tasks/TasksList.tsx';
 import ProjectsOverview from '../projects/ProjectsOverview';
 import Badge from '../ui/Badge';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Tooltip,
-  Legend,
-  Filler,
-} from 'chart.js';
+import '../../utils/chartConfig'; // Import chart configuration
 import { Line } from 'react-chartjs-2';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Tooltip,
-  Legend,
-  Filler,
-);
 
 const DashboardPage = () => {
   const { customers, projects, tasks } = useCrm();
