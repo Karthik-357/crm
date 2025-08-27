@@ -6,6 +6,17 @@ export default defineConfig({
   plugins: [react()],
   optimizeDeps: {
     exclude: ['lucide-react'],
+    include: ['jspdf', 'html2canvas']
+  },
+  build: {
+    rollupOptions: {
+      external: [],
+      output: {
+        manualChunks: {
+          'pdf-utils': ['jspdf', 'html2canvas']
+        }
+      }
+    }
   },
   server: {
     port: 3000,

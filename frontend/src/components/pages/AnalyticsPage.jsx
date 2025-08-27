@@ -1,10 +1,10 @@
 
 import React, { useMemo, useState } from 'react';
-import { jsPDF } from "jspdf";
+import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import './AnalyticsPage.css';
-import { Chart, ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend, PointElement, LineElement, Title } from 'chart.js';
-import { Doughnut, Bar, Line } from 'react-chartjs-2';
+import { Chart, ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
+import { Pie, Bar } from 'react-chartjs-2';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { useCrm } from '../../context/CrmContext';
 
@@ -317,24 +317,37 @@ const AnalyticsPage = () => {
 
   // Export entire analytics section as PDF
   const exportAnalyticsPDF = async () => {
-    const exportBtn = document.querySelector('.main-export');
-    if (exportBtn) exportBtn.style.display = 'none';
-    const analyticsSection = document.querySelector('.analytics-page');
-    if (!analyticsSection) return;
-    const canvas = await html2canvas(analyticsSection);
-    if (exportBtn) exportBtn.style.display = '';
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: 'a4' });
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    // Fit image to page
-    const imgProps = pdf.getImageProperties(imgData);
-    const ratio = Math.min(pageWidth / imgProps.width, pageHeight / imgProps.height);
-    const imgWidth = imgProps.width * ratio;
-    const imgHeight = imgProps.height * ratio;
-    pdf.addImage(imgData, 'PNG', (pageWidth - imgWidth) / 2, 20, imgWidth, imgHeight);
-    const monthName = new Date().toLocaleString('default', { month: 'long' });
-    pdf.save(`${monthName}.pdf`);
+    try {
+      const exportBtn = document.querySelector('.main-export');
+      if (exportBtn) exportBtn.style.display = 'none';
+      
+      const analyticsSection = document.querySelector('.analytics-page');
+      if (!analyticsSection) {
+        console.error('Analytics section not found');
+        return;
+      }
+      
+      const canvas = await html2canvas(analyticsSection);
+      if (exportBtn) exportBtn.style.display = '';
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: 'a4' });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      
+      // Fit image to page
+      const imgProps = pdf.getImageProperties(imgData);
+      const ratio = Math.min(pageWidth / imgProps.width, pageHeight / imgProps.height);
+      const imgWidth = imgProps.width * ratio;
+      const imgHeight = imgProps.height * ratio;
+      
+      pdf.addImage(imgData, 'PNG', (pageWidth - imgWidth) / 2, 20, imgWidth, imgHeight);
+      const monthName = new Date().toLocaleString('default', { month: 'long' });
+      pdf.save(`CRM_Analytics_${monthName}_${new Date().getFullYear()}.pdf`);
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      alert('Failed to export PDF. Please try again.');
+    }
   };
 
   return (
