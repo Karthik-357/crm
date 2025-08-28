@@ -4,7 +4,8 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import './AnalyticsPage.css';
 import '../../utils/chartConfig'; // Import chart configuration
-import { Pie, Bar } from 'react-chartjs-2';
+import { Doughnut, Line, Bar } from 'react-chartjs-2';
+import { CenterTextPlugin } from '../../utils/chartConfig';
 import { useCrm } from '../../context/CrmContext';
 
 const AnalyticsPage = () => {

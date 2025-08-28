@@ -54,3 +54,4 @@ ChartJS.register(
 );
 
 export default ChartJS;
+export { CenterTextPlugin };
