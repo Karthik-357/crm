@@ -97,30 +97,6 @@ app.post('/api/login', async (req, res) => {
 });
 
 // Password reset routes
-app.get('/api/test', (req, res) => {
-  res.json({ message: 'Backend server is working!' });
-});
-
-// Test authentication endpoint
-app.get('/api/test-auth', require('./middleware/auth').verifyToken, (req, res) => {
-  res.json({ 
-    message: 'Authentication working!', 
-    user: req.user,
-    userId: req.userId,
-    userRole: req.userRole
-  });
-});
-
-// Test environment variables
-app.get('/api/test-env', (req, res) => {
-  res.json({ 
-    message: 'Environment check',
-    hasJwtSecret: !!process.env.JWT_SECRET,
-    jwtSecretLength: process.env.JWT_SECRET ? process.env.JWT_SECRET.length : 0,
-    nodeEnv: process.env.NODE_ENV,
-    port: process.env.PORT
-  });
-});
 
 app.post('/api/auth/send-otp', authController.sendOTP);
 app.post('/api/auth/verify-otp', authController.verifyOTP);

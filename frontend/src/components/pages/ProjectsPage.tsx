@@ -25,17 +25,23 @@ const ProjectsPage = () => {
   const handleAddProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newProject.name.trim() && newProject.customerId.trim()) {
-      const valueNum = Number(newProject.value) || 0;
-      let progressNum = Number(newProject.progress);
-      if (isNaN(progressNum)) progressNum = 0;
-      progressNum = Math.max(0, Math.min(100, progressNum));
-      await addProject({
-        ...newProject,
-        value: valueNum,
-        progress: progressNum,
-      });
-      setNewProject({ name: '', customerId: '', status: 'proposal', startDate: '', value: '', progress: '' });
-      setShowAddProject(false);
+      try {
+        const valueNum = Number(newProject.value) || 0;
+        let progressNum = Number(newProject.progress);
+        if (isNaN(progressNum)) progressNum = 0;
+        progressNum = Math.max(0, Math.min(100, progressNum));
+        await addProject({
+          ...newProject,
+          value: valueNum,
+          progress: progressNum,
+        });
+        setNewProject({ name: '', customerId: '', status: 'proposal', startDate: '', value: '', progress: '' });
+        setShowAddProject(false);
+      } catch (error) {
+        console.error('Error creating project:', error);
+        const errorMessage = error?.response?.data?.error || error.message || 'Failed to create project';
+        alert(`Error: ${errorMessage}`);
+      }
     }
   };
 

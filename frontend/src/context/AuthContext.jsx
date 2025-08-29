@@ -12,6 +12,7 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
     let parsedUser = null;
+    
     try {
       if (userData && userData !== 'undefined') {
         parsedUser = JSON.parse(userData);
@@ -19,7 +20,9 @@ export const AuthProvider = ({ children }) => {
     } catch (e) {
       localStorage.removeItem('user');
     }
+    
     if (token && parsedUser) {
+      // Set user immediately, let axios interceptors handle token validation
       setUser({ ...parsedUser, token });
     }
     setLoading(false);
@@ -47,6 +50,8 @@ export const AuthProvider = ({ children }) => {
       throw new Error(error.message);
     }
   };
+
+
 
   const logout = () => {
     localStorage.removeItem('token');

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from './AuthContext';
+import { handleAuthError } from '../utils/authUtils';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
@@ -14,7 +15,7 @@ function mapId(obj) {
 }
 
 export function CrmProvider({ children }) {
-  const { user: currentUser, isAuthenticated } = useAuth();
+  const { user: currentUser, isAuthenticated, logout } = useAuth();
   const [customers, setCustomers] = useState([]);
   const [projects, setProjects] = useState([]);
   const [tasks, setTasks] = useState([]);
@@ -29,6 +30,35 @@ export function CrmProvider({ children }) {
       pushNotifications: false,
     };
   });
+
+  // Add axios interceptor to handle 401 errors globally
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        // Handle authentication errors
+        if (handleAuthError(error, logout)) {
+          return Promise.reject(error);
+        }
+        
+        // Handle server errors with retry
+        if (error.response?.status >= 500) {
+          console.log('Server error detected:', error.response.status);
+          if (error.config && !error.config._retry) {
+            error.config._retry = true;
+            // Retry once for server errors
+            return axios.request(error.config);
+          }
+        }
+        
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      axios.interceptors.response.eject(interceptor);
+    };
+  }, [logout]);
 
   // Apply dark mode class to body and root div, and persist to localStorage
   useEffect(() => {
@@ -143,15 +173,20 @@ export function CrmProvider({ children }) {
       throw new Error('User not authenticated');
     }
     
-    const res = await axios.post(`${API_BASE}/projects`, project, withAuth());
-    setProjects(prev => [...prev, mapId(res.data)]);
-    const actor = currentUser.name || currentUser.email || 'A user';
-    await addActivity({
-      customerId: project.customerId,
-      type: 'note',
-      description: `${actor} created project: ${project.name}`,
-      date: new Date().toISOString(),
-    });
+    try {
+      const res = await axios.post(`${API_BASE}/projects`, project, withAuth());
+      setProjects(prev => [...prev, mapId(res.data)]);
+      const actor = currentUser.name || currentUser.email || 'A user';
+      await addActivity({
+        customerId: project.customerId,
+        type: 'note',
+        description: `${actor} created project: ${project.name}`,
+        date: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error in addProject:', error);
+      throw error;
+    }
   };
   const updateProject = async (project) => {
     if (!currentUser || !currentUser.id) {
@@ -285,7 +320,6 @@ export function CrmProvider({ children }) {
   // Helper for auth header
   function withAuth() {
     const token = localStorage.getItem('token');
-    console.log('withAuth called, token:', token ? 'exists' : 'missing');
     return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
   }
 
