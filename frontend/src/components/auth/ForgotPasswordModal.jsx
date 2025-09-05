@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 
-const ForgotPasswordModal = ({ isOpen, onClose, onSuccess }) => {
-  const [email, setEmail] = useState('');
+const ForgotPasswordModal = ({ isOpen, onClose, onSuccess, defaultEmail }) => {
+  const [email, setEmail] = useState(defaultEmail || '');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -40,6 +40,13 @@ const ForgotPasswordModal = ({ isOpen, onClose, onSuccess }) => {
       setLoading(false);
     }
   };
+
+  // keep email in sync if defaultEmail changes when opening
+  React.useEffect(() => {
+    if (isOpen) {
+      setEmail(defaultEmail || '');
+    }
+  }, [isOpen, defaultEmail]);
 
   if (!isOpen) return null;
 
@@ -116,6 +123,7 @@ const ForgotPasswordModal = ({ isOpen, onClose, onSuccess }) => {
               }}
               placeholder="Enter your email address"
               required
+              disabled={!!defaultEmail}
             />
           </div>
 

@@ -74,6 +74,15 @@
   margin-bottom: 1rem;
   font-size: 1.1rem;
   color: #333;
+  font-weight: 600;
+}
+
+.chart-block {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-bottom: 1.5rem;
 }
 
 .summary-stats {
@@ -131,6 +140,20 @@
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 1rem;
+  padding: 0.5rem 0;
+}
+
+.filter-row label {
+  font-weight: 500;
+  color: #374151;
+}
+
+.filter-row select {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 0.875rem;
 }
 
 /* removed toggle styles */

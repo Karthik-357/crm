@@ -7,7 +7,6 @@ import CustomersPage from './components/pages/CustomersPage.tsx';
 import ProjectsPage from './components/pages/ProjectsPage.tsx';
 import TasksPage from './components/tasks/TasksPage';
 import CalendarPage from './components/calendar/CalendarPage';
-import SettingsPage from './components/settings/SettingsPage';
 import HelpPage from './components/help/HelpPage';
 import Login from './components/auth/Login';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -32,7 +31,6 @@ function App() {
           <Route path="projects" element={<ProjectsPage />} />
           <Route path="tasks" element={<TasksPage />} />
           <Route path="calendar" element={<CalendarPage />} />
-          <Route path="settings" element={<SettingsPage />} />
           <Route path="help" element={<HelpPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="analytics" element={<AnalyticsPage />} />

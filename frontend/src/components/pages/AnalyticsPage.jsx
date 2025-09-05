@@ -3,10 +3,46 @@ import React, { useMemo, useState } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import './AnalyticsPage.css';
-import '../../utils/chartConfig'; // Import chart configuration
 import { Doughnut, Line, Bar } from 'react-chartjs-2';
-import { CenterTextPlugin } from '../../utils/chartConfig';
 import { useCrm } from '../../context/CrmContext';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+} from 'chart.js';
+
+// Create a clean chart instance without any problematic plugins
+const cleanChartJS = ChartJS.createChart;
+ChartJS.register(
+  ArcElement,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
+
+// Completely disable data labels plugin
+ChartJS.defaults.plugins.datalabels = {
+  display: false
+};
+
+// Disable any center text plugins
+ChartJS.defaults.plugins.centerText = {
+  display: false
+};
 
 const AnalyticsPage = () => {
   const { customers, projects, tasks, activities, events } = useCrm();
@@ -49,16 +85,21 @@ const AnalyticsPage = () => {
   const revenueByMonth = useMemo(() => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const revenue = Array(12).fill(0);
-    activities.forEach(a => {
-      if (a.type === 'revenue' && a.date) {
-        const d = new Date(a.date);
+    
+    // Calculate revenue from project values based on start date
+    projects.forEach(project => {
+      if (project.startDate && project.value) {
+        const d = new Date(project.startDate);
         if (d.getFullYear() === selectedYear) {
-          revenue[d.getMonth()] += a.amount || 0;
+          revenue[d.getMonth()] += project.value || 0;
         }
       }
     });
+    
+
+    
     return { months, revenue };
-  }, [activities, selectedYear]);
+  }, [projects, selectedYear]);
 
   // Customers added per month for selected year
   const customersByMonth = useMemo(() => {
@@ -202,26 +243,12 @@ const AnalyticsPage = () => {
       {
         label: 'Revenue',
         data: revenueByMonth.revenue,
-        backgroundColor: 'rgba(54,162,235,0.35)',
+        backgroundColor: 'rgba(54,162,235,0.1)',
         borderColor: '#36A2EB',
         borderWidth: 2,
-      },
-      {
-        label: '3M MA',
-        data: (() => {
-          const arr = revenueByMonth.revenue;
-          const ma = arr.map((_, i) => {
-            const slice = arr.slice(Math.max(0, i - 2), i + 1);
-            const sum = slice.reduce((a, b) => a + b, 0);
-            return Math.round(sum / slice.length);
-          });
-          return ma;
-        })(),
-        backgroundColor: 'rgba(16,185,129,0.15)',
-        borderColor: '#10b981',
-        borderWidth: 2,
-        pointRadius: 0,
-        tension: 0.35,
+        pointRadius: 4,
+        pointBackgroundColor: '#36A2EB',
+        tension: 0.2
       }
     ],
   };
@@ -379,7 +406,6 @@ const AnalyticsPage = () => {
                     }]
                   }}
                   options={pieOptions}
-                  plugins={[CenterTextPlugin]}
                   id="customerStatusChart"
                 />
               </div>
@@ -401,7 +427,6 @@ const AnalyticsPage = () => {
                     }]
                   }}
                   options={pieOptions}
-                  plugins={[CenterTextPlugin]}
                   id="projectStatusChart"
                 />
               </div>
@@ -423,7 +448,6 @@ const AnalyticsPage = () => {
                     }]
                   }}
                   options={pieOptions}
-                  plugins={[CenterTextPlugin]}
                   id="taskStatusChart"
                 />
               </div>
@@ -433,25 +457,34 @@ const AnalyticsPage = () => {
               <div className="filter-row">
                 <label htmlFor="year-select">Year:</label>
                 <select id="year-select" value={selectedYear} onChange={e => setSelectedYear(Number(e.target.value))}>
-                  {Array.from(new Set(activities.filter(a => a.type === 'revenue').map(a => new Date(a.date).getFullYear()))).sort((a, b) => b - a).map(year => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
+                  {(() => {
+                    const projectYears = Array.from(new Set(projects.filter(p => p.startDate).map(p => new Date(p.startDate).getFullYear())));
+                    if (projectYears.length === 0) {
+                      return [new Date().getFullYear()].map(year => (
+                        <option key={year} value={year}>{year}</option>
+                      ));
+                    }
+                    return projectYears.sort((a, b) => b - a).map(year => (
+                      <option key={year} value={year}>{year}</option>
+                    ));
+                  })()}
                 </select>
               </div>
-              <div style={{ width: '100%', marginBottom: 8 }}>
-                <Line data={revenueTrendData} id="revenueTrendChart" options={{ responsive: true, plugins: { legend: { position: 'top' } } }} />
-              </div>
-              <button className="export-btn" onClick={() => {
-                const rows = [['Month','Revenue','3M_MA']];
-                const ma = revenueTrendData.datasets[1].data;
-                revenueByMonth.months.forEach((m, i) => rows.push([m, revenueByMonth.revenue[i], ma[i]]));
-                const csv = rows.map(r => r.join(',')).join('\n');
-                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url; a.download = `revenue_${selectedYear}.csv`; a.click();
-                URL.revokeObjectURL(url);
-              }}>Export Revenue CSV</button>
+              <Line 
+                data={revenueTrendData} 
+                id="revenueTrendChart" 
+                options={{ 
+                  responsive: true,
+                  plugins: { 
+                    legend: { position: 'top' }
+                  },
+                  scales: {
+                    y: {
+                      beginAtZero: true
+                    }
+                  }
+                }} 
+              />
             </div>
             <div className="chart-block">
               <h3>Customer Growth</h3>
