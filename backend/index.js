@@ -1,72 +1,65 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 const app = express();
 
-// Middleware - Emergency CORS fix - Allow all origins
-app.use(express.json({ limit: '10mb' }));
+// CORS Configuration - Simple and effective
 app.use(cors({
-  origin: '*', // Allow all origins temporarily
-  credentials: false, // Disable credentials when using wildcard
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
-  optionsSuccessStatus: 200
-}));
-
-// Handle preflight requests
-app.options('*', cors({
-  origin: '*',
-  credentials: false,
+  origin: true, // Allow all origins
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With']
 }));
 
-// Additional CORS headers middleware
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Origin, X-Requested-With');
-  
-  if (req.method === 'OPTIONS') {
-    res.sendStatus(200);
-  } else {
-    next();
-  }
-});
+// Middleware
+app.use(express.json({ limit: '10mb' }));
 
-// Connect to MongoDB with better error handling
+// Database connection with caching for serverless
 let isConnected = false;
 
 const connectDB = async () => {
-  if (isConnected) return;
+  if (isConnected) {
+    return;
+  }
   
   try {
     const conn = await mongoose.connect(process.env.MONGODB_URI, {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
+      bufferCommands: false,
+      bufferMaxEntries: 0,
     });
+    
     isConnected = conn.connections[0].readyState === 1;
-    console.log('Connected to MongoDB');
-  } catch (err) {
-    console.error('MongoDB connection error:', err);
-    throw err;
+    console.log('MongoDB connected successfully');
+    return conn;
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    isConnected = false;
+    throw error;
   }
 };
 
-// Connect to database
-connectDB();
+// Database middleware - ensure connection for each request
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error('Database connection failed:', error);
+    res.status(500).json({ error: 'Database connection failed' });
+  }
+});
 
-// Modular routes
-const customerRoutes = require('./routes/customers');
-const projectRoutes = require('./routes/projects');
-const taskRoutes = require('./routes/tasks');
-const activityRoutes = require('./routes/activities');
-const eventRoutes = require('./routes/events');
-const userRoutes = require('./routes/users');
+// Import models and routes after middleware setup
+const User = require('./models/User');
+const authController = require('./controllers/authController');
 
-// Add a health check endpoint
+// Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
@@ -75,15 +68,22 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// CORS debug endpoint
-app.get('/api/cors-test', (req, res) => {
-  res.json({
-    origin: req.headers.origin,
-    'user-agent': req.headers['user-agent'],
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
     timestamp: new Date().toISOString(),
-    headers: req.headers
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
   });
 });
+
+// Import and use modular routes
+const customerRoutes = require('./routes/customers');
+const projectRoutes = require('./routes/projects');
+const taskRoutes = require('./routes/tasks');
+const activityRoutes = require('./routes/activities');
+const eventRoutes = require('./routes/events');
+const userRoutes = require('./routes/users');
 
 // API routes
 app.use('/api/customers', customerRoutes);
@@ -93,17 +93,9 @@ app.use('/api/activities', activityRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/users', userRoutes);
 
-// Auth routes (register/login)
-const User = require('./models/User');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-const authController = require('./controllers/authController');
-
+// Auth routes - Register
 app.post('/api/register', async (req, res) => {
   try {
-    // Ensure database connection
-    await connectDB();
-    
     const { name, email, password, role } = req.body;
     
     console.log('Registration attempt for:', email);
@@ -138,11 +130,9 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
+// Auth routes - Login
 app.post('/api/login', async (req, res) => {
   try {
-    // Ensure database connection
-    await connectDB();
-    
     const { email, password } = req.body;
     
     console.log('Login attempt for:', email);
@@ -188,7 +178,6 @@ app.post('/api/login', async (req, res) => {
 });
 
 // Password reset routes
-
 app.post('/api/auth/send-otp', authController.sendOTP);
 app.post('/api/auth/verify-otp', authController.verifyOTP);
 app.post('/api/auth/reset-password', authController.resetPasswordWithOTP);
@@ -196,10 +185,18 @@ app.post('/api/auth/forgot-password', authController.forgotPassword);
 app.post('/api/auth/reset-password-token', authController.resetPassword);
 app.get('/api/auth/verify-reset-token/:token', authController.verifyResetToken);
 
-// Centralized error handler
+// Password reset routes
+app.post('/api/auth/send-otp', authController.sendOTP);
+app.post('/api/auth/verify-otp', authController.verifyOTP);
+app.post('/api/auth/reset-password', authController.resetPasswordWithOTP);
+app.post('/api/auth/forgot-password', authController.forgotPassword);
+app.post('/api/auth/reset-password-token', authController.resetPassword);
+app.get('/api/auth/verify-reset-token/:token', authController.verifyResetToken);
+
+// Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Error:', err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+  console.error('Error:', err);
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 // Handle 404 routes
@@ -216,4 +213,4 @@ if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
-} 
+}
