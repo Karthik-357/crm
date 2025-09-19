@@ -27,15 +27,16 @@ const connectDB = async () => {
   }
   
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+    // Use local MongoDB if no environment variable is set
+    const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/crm-mini';
+    
+    const conn = await mongoose.connect(mongoURI, {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
-      bufferCommands: false,
-      bufferMaxEntries: 0,
     });
     
     isConnected = conn.connections[0].readyState === 1;
-    console.log('MongoDB connected successfully');
+    console.log('MongoDB connected successfully to:', mongoURI);
     return conn;
   } catch (error) {
     console.error('MongoDB connection error:', error);
@@ -58,15 +59,6 @@ app.use(async (req, res, next) => {
 // Import models and routes after middleware setup
 const User = require('./models/User');
 const authController = require('./controllers/authController');
-
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
-  });
-});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
