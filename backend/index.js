@@ -8,15 +8,31 @@ const app = express();
 // Middleware - Enhanced CORS for production
 app.use(express.json({ limit: '10mb' }));
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'https://crm-swart-kappa.vercel.app',
-    /\.vercel\.app$/
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'https://crm-swart-kappa.vercel.app',
+      'https://crm-l33a.vercel.app'
+    ];
+    
+    // Check if origin is in allowed list or matches Vercel pattern
+    if (allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin)) {
+      return callback(null, true);
+    }
+    
+    console.log('CORS blocked origin:', origin);
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Handle preflight requests
+app.options('*', cors());
 
 // Connect to MongoDB with better error handling
 let isConnected = false;

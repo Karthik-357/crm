@@ -10,7 +10,7 @@ import { Line } from 'react-chartjs-2';
 const DashboardPage = () => {
   const { customers, projects, tasks } = useCrm();
 
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://crm-swart-kappa.vercel.app/api';
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
   // State for real customer stats
   const [projectStats, setProjectStats] = useState({
