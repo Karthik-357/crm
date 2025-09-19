@@ -5,34 +5,27 @@ require('dotenv').config();
 
 const app = express();
 
-// Middleware - Enhanced CORS for production
+// Middleware - Emergency CORS fix - Allow all origins
 app.use(express.json({ limit: '10mb' }));
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    // Allow all localhost requests for development
-    if (origin.includes('localhost')) return callback(null, true);
-    
-    // Allow all vercel.app domains
-    if (origin.endsWith('.vercel.app')) return callback(null, true);
-    
-    console.log('CORS blocked origin:', origin);
-    return callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true,
+  origin: '*', // Allow all origins temporarily
+  credentials: false, // Disable credentials when using wildcard
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+  optionsSuccessStatus: 200
+}));
+
+// Handle preflight requests
+app.options('*', cors({
+  origin: '*',
+  credentials: false,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With']
 }));
 
-// Handle preflight requests
-app.options('*', cors());
-
 // Additional CORS headers middleware
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin);
-  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Origin, X-Requested-With');
   
