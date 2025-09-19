@@ -6,6 +6,7 @@ import ForgotPasswordFlow from './ForgotPasswordFlow';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const navigate = useNavigate();
@@ -88,18 +89,45 @@ const Login = () => {
               <label htmlFor="password" style={{ fontWeight: 500, color: '#374151', marginBottom: 6, display: 'block' }}>
                 Password
               </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="input"
-                style={{ fontSize: '1rem', padding: '0.75rem', marginBottom: 0 }}
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div style={{ position: 'relative' }}>
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  className="input"
+                  style={{ fontSize: '1rem', padding: '0.75rem', paddingRight: '3.5rem', marginBottom: 0, width: '100%' }}
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '0.75rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#6366f1',
+                    fontSize: '12px',
+                    padding: '4px 6px',
+                    fontWeight: '500',
+                    borderRadius: '4px',
+                    transition: 'color 0.2s',
+                  }}
+                  tabIndex={-1}
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                  onMouseOver={e => (e.currentTarget.style.color = '#4f46e5')}
+                  onMouseOut={e => (e.currentTarget.style.color = '#6366f1')}
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
             </div>
             {error && (
               <div className="text-red-500 text-sm text-center" style={{ marginBottom: '1rem' }}>{error}</div>

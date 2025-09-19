@@ -30,7 +30,10 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+    
     try {
+      console.log('Attempting login to:', `${API_BASE}/login`);
+      
       const response = await fetch(`${API_BASE}/login`, {
         method: 'POST',
         headers: {
@@ -38,16 +41,24 @@ export const AuthProvider = ({ children }) => {
         },
         body: JSON.stringify({ email, password }),
       });
-      const data = await response.json();
+
+      console.log('Response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
       }
+
+      const data = await response.json();
+      console.log('Login successful');
+      
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       setUser({ ...data.user, token: data.token });
       return true;
     } catch (error) {
-      throw new Error(error.message);
+      console.error('Login error:', error);
+      throw new Error(error.message || 'Network error - please check your connection');
     }
   };
 

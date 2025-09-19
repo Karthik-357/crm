@@ -56,14 +56,6 @@ const ProfilePage = () => {
             <div style={{ fontWeight: 600, wordBreak: 'break-all' }}>{user._id || '—'}</div>
           </div>
         </div>
-
-        <div className="card" style={{ padding: 16 }}>
-          <h3 style={{ marginBottom: 8 }}>About</h3>
-          <p style={{ color: '#6b7280' }}>
-            This is your account profile. Future enhancements could let you update your name and avatar here. For now, you can
-            reset your password and view basic account details.
-          </p>
-        </div>
       </div>
 
       <ForgotPasswordModal

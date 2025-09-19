@@ -9,15 +9,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Test the connection (optional)
-const testConnection = async () => {
-  try {
-    await transporter.verify();
-    console.log('Email service is ready to send messages');
-  } catch (error) {
-    console.error('Email service error:', error);
-  }
-};
+
 
 // Email templates
 const emailTemplates = {
@@ -61,11 +53,6 @@ const emailTemplates = {
     `
   })
 };
-
-// Initialize connection test when module is loaded
-if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-  testConnection();
-}
 
 module.exports = {
   transporter,

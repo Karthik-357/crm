@@ -4,22 +4,41 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-const http = require('http').createServer(app);
-const io = require('socket.io')(http, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  },
-});
 
-// Middleware
-app.use(express.json());
-app.use(cors());
+// Middleware - Enhanced CORS for production
+app.use(express.json({ limit: '10mb' }));
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'https://crm-swart-kappa.vercel.app',
+    /\.vercel\.app$/
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+// Connect to MongoDB with better error handling
+let isConnected = false;
+
+const connectDB = async () => {
+  if (isConnected) return;
+  
+  try {
+    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+    isConnected = conn.connections[0].readyState === 1;
+    console.log('Connected to MongoDB');
+  } catch (err) {
+    console.error('MongoDB connection error:', err);
+    throw err;
+  }
+};
+
+// Connect to database
+connectDB();
 
 // Modular routes
 const customerRoutes = require('./routes/customers');
@@ -29,9 +48,14 @@ const activityRoutes = require('./routes/activities');
 const eventRoutes = require('./routes/events');
 const userRoutes = require('./routes/users');
 
-// Attach socket.io to activity controller
-const activityController = require('./controllers/activityController');
-activityController.setSocketIO(io);
+// Add a health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
 
 // API routes
 app.use('/api/customers', customerRoutes);
@@ -49,38 +73,76 @@ const authController = require('./controllers/authController');
 
 app.post('/api/register', async (req, res) => {
   try {
+    // Ensure database connection
+    await connectDB();
+    
     const { name, email, password, role } = req.body;
-    const existingUser = await User.findOne({ email });
+    
+    console.log('Registration attempt for:', email);
+    
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Name, email, and password are required' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    }
+
+    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
     if (existingUser) {
+      console.log('User already exists:', email);
       return res.status(400).json({ error: 'User already exists' });
     }
-    const user = new User({ name, email, password, role: role || 'user' });
+
+    const user = new User({ 
+      name: name.trim(), 
+      email: email.toLowerCase().trim(), 
+      password, 
+      role: role || 'user' 
+    });
     await user.save();
+    
+    console.log('User registered successfully:', email);
     res.status(201).json({ message: 'User created successfully' });
   } catch (error) {
+    console.error('Registration error:', error);
     res.status(400).json({ error: error.message });
   }
 });
 
 app.post('/api/login', async (req, res) => {
   try {
+    // Ensure database connection
+    await connectDB();
+    
     const { email, password } = req.body;
+    
+    console.log('Login attempt for:', email);
+    
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
-    const user = await User.findOne({ email });
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
     if (!user) {
+      console.log('User not found:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
+
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      console.log('Password mismatch for:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
+
     const token = jwt.sign(
       { userId: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
+
+    console.log('Login successful for:', email);
+    
     res.json({
       token,
       user: {
@@ -92,6 +154,7 @@ app.post('/api/login', async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -105,13 +168,24 @@ app.post('/api/auth/forgot-password', authController.forgotPassword);
 app.post('/api/auth/reset-password-token', authController.resetPassword);
 app.get('/api/auth/verify-reset-token/:token', authController.verifyResetToken);
 
-// Centralized error handler (optional, can be improved)
+// Centralized error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('Error:', err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-const PORT = process.env.PORT || 5000;
-http.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-}); 
+// Handle 404 routes
+app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Route not found' });
+});
+
+// Export the app for Vercel
+module.exports = app;
+
+// For local development
+if (require.main === module) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+} 
