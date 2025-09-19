@@ -82,6 +82,16 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// CORS debug endpoint
+app.get('/api/cors-test', (req, res) => {
+  res.json({
+    origin: req.headers.origin,
+    'user-agent': req.headers['user-agent'],
+    timestamp: new Date().toISOString(),
+    headers: req.headers
+  });
+});
+
 // API routes
 app.use('/api/customers', customerRoutes);
 app.use('/api/projects', projectRoutes);
